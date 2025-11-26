@@ -313,7 +313,7 @@ paths:
             application/json:
               example:
                 status: error
-                message: "item not found"
+                message: "Item not found or not owned"
 
     put:
       tags:
