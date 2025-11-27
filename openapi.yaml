@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: MyHostel API - Auth & Items
+  title: Auth & Items
   version: 1.0.0
   description: Complete Swagger documentation for Authentication and Items module.
   contact:
@@ -9,12 +9,11 @@ info:
 servers:
   - url: http://localhost:3000/api
 
-# Authentication
 tags:
   - name: Auth
     description: Authentication endpoints
   - name: Items
-    description: CRUD operations for user-specific items
+    description: Item management endpoints
 
 components:
   securitySchemes:
@@ -33,12 +32,10 @@ components:
       properties:
         email:
           type: string
-          format: email
         phone:
           type: string
         password:
           type: string
-          minLength: 6
 
     LoginRequest:
       type: object
@@ -48,46 +45,7 @@ components:
       properties:
         email:
           type: string
-          format: email
         password:
-          type: string
-
-    TokenResponse:
-      type: object
-      properties:
-        token:
-          type: string
-
-    UserProfile:
-      type: object
-      properties:
-        id:
-          type: string
-        email:
-          type: string
-          format: email
-        phone:
-          type: string
-
-    ErrorResponse:
-      type: object
-      properties:
-        status:
-          type: string
-          example: error
-        message:
-          type: string
-
-    Item:
-      type: object
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        userId:
           type: string
 
     ItemRequest:
@@ -100,9 +58,39 @@ components:
         description:
           type: string
 
-paths:
-  ## AUTHENTICATION MODULE
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
 
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              msg:
+                type: string
+              path:
+                type: string
+              location:
+                type: string
+
+paths:
+  # ---------------------- AUTH ----------------------
   /auth/register:
     post:
       tags:
@@ -118,37 +106,59 @@ paths:
               email: "user@example.com"
               phone: "+919876543210"
               password: "StrongPass123"
+
       responses:
         "201":
-          description: Created - User registered successfully
+          description: User registered successfully
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/UserProfile"
               example:
-                id: "64aa1a1234bbb1cc22d45e00"
-                email: "user@example.com"
-                phone: "+919876543210"
+                success: true
+                message: "User registered successfully. Please verify your email."
+                user:
+                  id: "507f1f77bcf86cd799439011"
+                  email: "john@example.com"
+                  phone: "9876543210"
+                  createdAt: "2024-01-01T00:00:00.000Z"
 
         "400":
-          description: Bad Request - Validation error
+          description: Validation error
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
               example:
-                status: error
-                message: "email is required"
+                success: false
+                message: "Validation failed"
+                errors:
+                  - type: "field"
+                    msg: "Email is required"
+                    path: "email"
+                    location: "body"
 
         "409":
-          description: Conflict - Email or phone already exists
+          description: Email or phone already exists
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
               example:
-                status: error
-                message: "email already exists"
+                success: false
+                message: "Validation failed"
+                errors:
+                  - type: "unique"
+                    msg: "Email already exists"
+                    path: "email"
+                    location: "body"
+
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Internal server error"
+                errors:
+                  - type: "server"
+                    msg: "Unexpected error occurred"
+                    path: null
+                    location: null
 
   /auth/login:
     post:
@@ -164,73 +174,101 @@ paths:
             example:
               email: "user@example.com"
               password: "StrongPass123"
+
       responses:
         "200":
-          description: Login success - Returns token
+          description: Login successful
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/TokenResponse"
               example:
-                token: "eyJhbGc..."
+                success: true
+                message: "Login successful"
+                accessToken: "TOKEN_HERE"
+                user:
+                  id: "507f1f77bcf86cd799439011"
+                  email: "john@example.com"
+                  phone: "9876543210"
+                  createdAt: "2024-01-01T00:00:00.000Z"
 
         "400":
-          description: Missing or invalid fields
+          description: Validation failed
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
               example:
-                status: error
-                message: "password is required"
+                success: false
+                message: "Validation failed"
+                errors:
+                  - type: "field"
+                    msg: "Email is required"
+                    path: "email"
+                    location: "body"
 
         "401":
           description: Invalid credentials
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
               example:
-                status: error
-                message: "invalid email or password"
+                success: false
+                message: "Invalid email or password"
+                errors:
+                  - type: "auth"
+                    msg: "Invalid credentials"
+                    path: "email/password"
+                    location: "body"
+
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Internal server error"
+                errors:
+                  - type: "server"
+                    msg: "Unexpected error occurred"
+                    path: null
+                    location: null
 
   /auth/my-profile:
     get:
       tags:
         - Auth
-      summary: Get logged-in user profile
+      summary: Get logged-in user's profile
       security:
         - BearerAuth: []
+
       responses:
         "200":
-          description: Returns logged-in user's profile
+          description: User profile
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/UserProfile"
               example:
                 id: "642bb1c35fa2b1"
                 email: "user@example.com"
                 phone: "+919876543210"
 
-        "401":
-          description: Unauthorized - Token missing or invalid
+        "400":
+          description: Validation error
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples:
-                noToken:
-                  value:
-                    status: error
-                    message: token required
-                invalidToken:
-                  value:
-                    status: error
-                    message: invalid or expired token
+              example:
+                success: false
+                message: "Validation failed"
+                errors:
+                  - type: "field"
+                    msg: "email is required"
+                    path: "email"
+                    location: "body"
 
-  ##  ITEMS MODULE
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Something went wrong on the server"
 
+  # ---------------------- ITEMS ----------------------
   /items:
     get:
       tags:
@@ -244,6 +282,8 @@ paths:
           content:
             application/json:
               example:
+                success: true
+                message: "Items fetched successfully"
                 items:
                   - id: "1"
                     title: "Bag"
@@ -251,6 +291,58 @@ paths:
                   - id: "2"
                     title: "Laptop"
                     description: "Dell laptop"
+
+        "400":
+          description: Invalid query or parameters
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Validation failed"
+                errors:
+                  - type: "query"
+                    msg: "Invalid sort value"
+                    path: "sort"
+                    location: "query"
+
+        "401":
+          description: Unauthorized - Token missing or invalid
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Unauthorized"
+                errors:
+                  - type: "auth"
+                    msg: "Token missing or invalid"
+                    path: "authorization"
+                    location: "header"
+
+        "404":
+          description: Item not found
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Item not found"
+                errors:
+                  - type: "not_found"
+                    msg: "No items found for this user"
+                    path: "items"
+                    location: "database"
+
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Internal server error"
+                errors:
+                  - type: "server"
+                    msg: "Unexpected server error"
+                    path: null
+                    location: null
 
     post:
       tags:
@@ -267,23 +359,71 @@ paths:
             example:
               title: "New Item"
               description: "This is a sample item"
+
       responses:
         "201":
-          description: Item created
+          description: Item created successfully
           content:
             application/json:
               example:
-                id: "abc123"
-                title: "New Item"
-                description: "This is a sample item"
+                success: true
+                message: "Item created successfully"
+                item:
+                  id: "abc123"
+                  title: "New Item"
+                  description: "This is a sample item"
 
         "400":
           description: Bad Request
           content:
             application/json:
               example:
-                status: error
+                success: false
                 message: "title is required"
+                errors:
+                  - type: "field"
+                    msg: "title is required"
+                    path: "title"
+                    location: "body"
+
+        "401":
+          description: Unauthorized - Token missing or invalid
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Invalid or expired token"
+                errors:
+                  - type: "auth"
+                    msg: "Token invalid or missing"
+                    path: null
+                    location: "header"
+
+        "409":
+          description: Duplicate item for this user
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Item already exists"
+                errors:
+                  - type: "unique"
+                    msg: "Item already exists"
+                    path: "title"
+                    location: "body"
+
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Internal server error"
+                errors:
+                  - type: "server"
+                    msg: "Unexpected error occurred"
+                    path: null
+                    location: null
 
   /items/{id}:
     get:
@@ -304,16 +444,64 @@ paths:
           content:
             application/json:
               example:
-                id: "1"
-                title: "Book"
-                description: "Red diary"
+                success: true
+                message: "Item fetched successfully"
+                item:
+                  id: "1"
+                  title: "Book"
+                  description: "Red diary"
+
+        "400":
+          description: Invalid item ID
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Invalid item ID"
+                errors:
+                  - type: "field"
+                    msg: "Invalid item id"
+                    path: "id"
+                    location: "path"
+
+        "401":
+          description: Unauthorized - Token invalid
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Invalid or expired token"
+                errors:
+                  - type: "auth"
+                    msg: "Token missing or invalid"
+                    path: null
+                    location: "header"
+
         "404":
           description: Item not found or not owned
           content:
             application/json:
               example:
-                status: error
-                message: "Item not found or not owned"
+                success: false
+                message: "Item not found"
+                errors:
+                  - type: "not_found"
+                    msg: "Item not found or not owned by user"
+                    path: "id"
+                    location: "path"
+
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Internal server error"
+                errors:
+                  - type: "server"
+                    msg: "Unexpected error occurred"
+                    path: null
+                    location: null
 
     put:
       tags:
@@ -341,15 +529,60 @@ paths:
           content:
             application/json:
               example:
-                status: success
+                success: true
                 message: "item updated"
+
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Validation failed"
+                errors:
+                  - type: "field"
+                    msg: "title is required"
+                    path: "title"
+                    location: "body"
+
+        "401":
+          description: Unauthorized - Token invalid
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Invalid or expired token"
+                errors:
+                  - type: "auth"
+                    msg: "Token missing or invalid"
+                    path: null
+                    location: "header"
+
         "404":
           description: Item not found or not owned
           content:
             application/json:
               example:
-                status: error
+                success: false
                 message: "item not found"
+                errors:
+                  - type: "not_found"
+                    msg: "Item not found or not owned"
+                    path: "id"
+                    location: "path"
+
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Internal server error"
+                errors:
+                  - type: "server"
+                    msg: "Unexpected error occurred"
+                    path: null
+                    location: null
 
     delete:
       tags:
@@ -369,12 +602,57 @@ paths:
           content:
             application/json:
               example:
-                status: success
+                success: true
                 message: "item deleted"
+
+        "400":
+          description: Invalid ID format
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Invalid id format"
+                errors:
+                  - type: "field"
+                    msg: "Invalid id format"
+                    path: "id"
+                    location: "path"
+
+        "401":
+          description: Unauthorized - Token invalid
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Invalid or expired token"
+                errors:
+                  - type: "auth"
+                    msg: "Token missing or invalid"
+                    path: null
+                    location: "header"
+
         "404":
           description: Item not found or not owned
           content:
             application/json:
               example:
-                status: error
+                success: false
                 message: "item not found"
+                errors:
+                  - type: "not_found"
+                    msg: "Item not found or not owned"
+                    path: "id"
+                    location: "path"
+
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              example:
+                success: false
+                message: "Internal server error"
+                errors:
+                  - type: "server"
+                    msg: "Unexpected error occurred"
+                    path: null
+                    location: null
