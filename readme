@@ -1,0 +1,89 @@
+# Auth API
+
+This API handles user authentication, including registration, login, and retrieving the logged-in user's profile.
+
+---
+
+## Base URL
+
+```
+http://localhost:5000/api
+```
+
+---
+
+## Endpoints
+
+### 1. Register User
+
+**POST** `/auth/register`
+
+**Request Body:**
+
+```json
+{
+  "email": "user@example.com",
+  "phone": "+919876543210",
+  "password": "StrongPass123"
+}
+```
+
+**Responses:**
+
+- **201 Created:** User registered successfully
+- **400 Bad Request:** Validation error
+- **409 Conflict:** Email or phone already exists
+- **500 Internal Server Error:** Something went wrong
+
+---
+
+### 2. Login User
+
+**POST** `/auth/login`
+
+**Request Body:**
+
+```json
+{
+  "email": "user@example.com",
+  "password": "StrongPass123"
+}
+```
+
+**Responses:**
+
+- **200 OK:** Login successful
+- **400 Bad Request:** Validation error
+- **401 Unauthorized:** Invalid email or password
+- **500 Internal Server Error:** Something went wrong
+
+---
+
+### 3. Get My Profile
+
+**GET** `/auth/my-profile`
+
+**Headers:**
+
+```
+Authorization: Bearer <accessToken>
+```
+
+**Responses:**
+
+- **200 OK:** Returns logged-in user's profile
+- **400 Bad Request:** Validation error
+- **500 Internal Server Error:** Something went wrong
+
+---
+
+## Notes
+
+- Passwords are hashed before storing in the database.
+- Email and phone must be unique.
+- `BearerAuth` token is required for `/auth/my-profile`.
+
+## To run the project
+
+Run `npm install` to install dependencies, then `npm run dev` to start the server.
+Use `/auth/register`, `/auth/login`, and `/auth/my-profile` endpoints to register, login, and get the user profile.
