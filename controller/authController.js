@@ -203,12 +203,10 @@ export const getMyProfile = async (req, res) => {
   try {
     if (!req.user) {
       return res.status(400).json({
-        success: false,
-        message: "Validation failed",
         errors: [
           {
             type: "field",
-            msg: "email is required",
+            msg: "cannot find email",
             path: "email",
             location: "body",
           },

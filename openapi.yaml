@@ -252,11 +252,9 @@ paths:
           content:
             application/json:
               example:
-                success: false
-                message: "Validation failed"
                 errors:
                   - type: "field"
-                    msg: "email is required"
+                    msg: " cannot get email"
                     path: "email"
                     location: "body"
 
