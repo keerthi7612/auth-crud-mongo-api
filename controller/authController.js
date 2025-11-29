@@ -17,6 +17,17 @@ export const registerUser = async (req, res) => {
         path: "email",
         location: "body",
       });
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.(com|in)$/i;
+
+      if (!emailRegex.test(email)) {
+        errors.push({
+          type: "field",
+          msg: "Invalid email format",
+          path: "email",
+          location: "body",
+        });
+      }
     }
 
     if (!phone) {
@@ -26,6 +37,17 @@ export const registerUser = async (req, res) => {
         path: "phone",
         location: "body",
       });
+    } else {
+      const phoneRegex = /^[6-9]\d{9}$/;
+
+      if (!phoneRegex.test(phone)) {
+        errors.push({
+          type: "field",
+          msg: "Phone must be a valid 10-digit ",
+          path: "phone",
+          location: "body",
+        });
+      }
     }
 
     if (!password) {
@@ -83,7 +105,7 @@ export const registerUser = async (req, res) => {
     // Response (201)
     return res.status(201).json({
       success: true,
-      message: "User registered successfully. Please verify your email.",
+      message: "User registered successfully.",
       user: {
         id: user._id,
         email: user.email,
@@ -215,6 +237,8 @@ export const getMyProfile = async (req, res) => {
     }
 
     return res.status(200).json({
+      success: true,
+      message: "User registered profile.",
       id: req.user._id,
       email: req.user.email,
       phone: req.user.phone,

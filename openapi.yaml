@@ -243,9 +243,12 @@ paths:
           content:
             application/json:
               example:
-                id: "642bb1c35fa2b1"
-                email: "user@example.com"
-                phone: "+919876543210"
+                success: true
+                message: "User registered profile."
+                user:
+                  id: "642bb1c35fa2b1"
+                  email: "user@example.com"
+                  phone: "9876543210"
 
         "400":
           description: Validation error
