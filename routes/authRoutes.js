@@ -6,10 +6,10 @@ import {
 } from "../controller/authController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 
-const router = Router();
+const authRoutes = Router();
 
-router.post("/register", registerUser).post("/login", loginUser);
+authRoutes.post("/register", registerUser).post("/login", loginUser);
 
-router.get("/profile", authMiddleware, getMyProfile);
+authRoutes.get("/profile", authMiddleware, getMyProfile);
 
-export default router;
+export default authRoutes;

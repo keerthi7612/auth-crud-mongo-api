@@ -269,7 +269,7 @@ paths:
                 success: false
                 message: "Something went wrong on the server"
 
-  # ---------------------- ITEMS ----------------------
+  # ----------------------ITEMS ----------------------
   /items:
     get:
       tags:
