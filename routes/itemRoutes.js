@@ -1,11 +1,10 @@
 import Router from "express";
 import { createItem } from "../controller/itemController.js";
 import { itemMiddleware } from "../middleware/itemMiddleware.js";
+import { validateCreateItem } from "../validation/itemValidator.js";
 
 const itemRoutes = Router();
 
-// GET /items (get logged-in user's items)
-
-itemRoutes.post("/create", itemMiddleware, createItem);
+itemRoutes.post("/create", itemMiddleware, createItem, validateCreateItem);
 
 export default itemRoutes;
