@@ -1,5 +1,11 @@
 import Item from "../model/itemModel.js";
-import { errorResponse, successResponse } from "../utils/responseUtil.js";
+import { successResponse, serverError } from "../utils/responseUtil.js";
+
+import {
+  sendFieldError,
+  sendDuplicateError,
+  validationFieldError,
+} from "../utils/validationHelper.js";
 
 export const createItem = async (req, res) => {
   try {
@@ -7,29 +13,15 @@ export const createItem = async (req, res) => {
     const userId = req.user.id;
 
     if (!title || title.trim() === "") {
-      return res.status(400).json(
-        errorResponse("title is required", {
-          type: "field",
-          msg: "title is required",
-          path: "title",
-          location: "body",
-        })
-      );
+      return sendFieldError(res, "title is required", "title");
     }
 
+    console.log("Checking if item exists...");
     const existing = await Item.findOne({ title, userId });
-
     if (existing) {
-      return res.status(409).json(
-        errorResponse("Item already exists", {
-          type: "unique",
-          msg: "Item already exists",
-          path: "title",
-          location: "body",
-        })
-      );
+      return sendDuplicateError(res, "Item already exists", "title");
     }
-
+    console.log("Existing item:", existing);
     const item = await Item.create({ title, description, userId });
 
     return res.status(201).json(
@@ -43,15 +35,7 @@ export const createItem = async (req, res) => {
     );
   } catch (error) {
     console.log("Create item error:", error);
-
-    return res.status(500).json(
-      errorResponse("Internal server error", {
-        type: "server",
-        msg: "Unexpected error occurred",
-        path: null,
-        location: null,
-      })
-    );
+    return res.status(500).json(serverError());
   }
 };
 
@@ -59,28 +43,21 @@ export const getAllItems = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const { sort = "asc", search = "", page = 1, limit = 5 } = req.query;
+    let { sort = "asc", search = "", page = 1, limit = 5 } = req.query;
+
+    page = Number(page);
+    limit = Number(limit);
 
     if (!["asc", "desc"].includes(sort.toLowerCase())) {
-      return res.status(400).json(
-        errorResponse("Validation failed", {
-          type: "query",
-          msg: "Invalid sort value",
-          path: "sort",
-          location: "query",
-        })
-      );
+      return validationFieldError(res, "Invalid sort value", "sort"); // use sendFieldError
     }
 
     if (isNaN(page) || page <= 0) {
-      return res.status(400).json(
-        errorResponse("Validation failed", {
-          type: "query",
-          msg: "Invalid page value",
-          path: "page",
-          location: "query",
-        })
-      );
+      return validationFieldError(res, "Invalid page value", "page"); // use sendFieldError
+    }
+
+    if (isNaN(limit) || limit <= 0) {
+      return validationFieldError(res, "Invalid limit value", "limit");
     }
 
     const searchFilter =
@@ -115,14 +92,6 @@ export const getAllItems = async (req, res) => {
     );
   } catch (error) {
     console.log("GET ITEMS ERROR:", error);
-
-    return res.status(500).json(
-      errorResponse("Internal server error", {
-        type: "server",
-        msg: "Unexpected server error",
-        path: null,
-        location: null,
-      })
-    );
+    return res.status(500).json(serverError());
   }
 };
