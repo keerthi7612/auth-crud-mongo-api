@@ -285,6 +285,11 @@ paths:
               example:
                 success: true
                 message: "Items fetched successfully"
+                pagination:
+                currentPage: 1
+                totalPages: 3
+                totalItems: 12
+                limit: 5
                 items:
                   - id: "1"
                     title: "Bag"
