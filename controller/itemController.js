@@ -1,7 +1,5 @@
 import Item from "../model/itemModel.js";
-import { errorResponse } from "../utils/responseUtil.js";
-
-//####################post####################################
+import { errorResponse, successResponse } from "../utils/responseUtil.js";
 
 export const createItem = async (req, res) => {
   try {
@@ -34,15 +32,15 @@ export const createItem = async (req, res) => {
 
     const item = await Item.create({ title, description, userId });
 
-    return res.status(201).json({
-      success: true,
-      message: "Item created successfully",
-      item: {
-        id: item._id,
-        title: item.title,
-        description: item.description,
-      },
-    });
+    return res.status(201).json(
+      successResponse("Item created successfully", {
+        item: {
+          id: item._id,
+          title: item.title,
+          description: item.description,
+        },
+      })
+    );
   } catch (error) {
     console.log("Create item error:", error);
 
@@ -56,8 +54,6 @@ export const createItem = async (req, res) => {
     );
   }
 };
-
-//###################GET##############################
 
 export const getAllItems = async (req, res) => {
   try {
@@ -100,34 +96,23 @@ export const getAllItems = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    if (items.length === 0) {
-      return res.status(404).json(
-        errorResponse("Item not found", {
-          type: "not_found",
-          msg: "No items found for this user",
-          path: "items",
-          location: "database",
-        })
-      );
-    }
-
     const totalItems = await Item.countDocuments({ userId, ...searchFilter });
     const totalPages = Math.ceil(totalItems / limit);
 
-    return res.status(200).json({
-      success: true,
-      message: "Items fetched successfully",
-      items: items.map((item) => ({
-        id: item._id,
-        title: item.title,
-        description: item.description,
-      })),
-      pagination: {
-        currentPage: Number(page),
-        totalPages,
-        totalItems,
-      },
-    });
+    return res.status(200).json(
+      successResponse("Items fetched successfully", {
+        items: items.map((item) => ({
+          id: item._id,
+          title: item.title,
+          description: item.description,
+        })),
+        pagination: {
+          currentPage: Number(page),
+          totalPages,
+          totalItems,
+        },
+      })
+    );
   } catch (error) {
     console.log("GET ITEMS ERROR:", error);
 
