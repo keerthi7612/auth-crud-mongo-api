@@ -292,6 +292,11 @@ paths:
                   - id: "2"
                     title: "Laptop"
                     description: "Dell laptop"
+                pagination:
+                currentPage: 1
+                totalPages: 3
+                totalItems: 12
+                limit: 5
 
         "400":
           description: Invalid query or parameters
