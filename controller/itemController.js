@@ -1,11 +1,11 @@
 import Item from "../model/itemModel.js";
 import { successResponse, serverError } from "../utils/responseUtil.js";
-
 import {
   sendFieldError,
   sendDuplicateError,
   validationFieldError,
 } from "../utils/validationHelper.js";
+import mongoose from "mongoose";
 
 export const createItem = async (req, res) => {
   try {
@@ -77,6 +77,44 @@ export const getAllItems = async (req, res) => {
           currentPage: Number(page),
           totalPages,
           totalItems,
+        },
+      })
+    );
+  } catch (error) {
+    return res.status(500).json(serverError());
+  }
+};
+
+export const getItemById = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    if (!id) {
+      return validationFieldError(res, "Item ID is required", "id", "params");
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return validationFieldError(
+        res,
+        "Invalid item ID format",
+        "id",
+        "params"
+      );
+    }
+
+    const item = await Item.findOne({ _id: id, userId });
+
+    if (!item) {
+      return sendFieldError(res, "Item not found", "id", 404);
+    }
+
+    return res.status(200).json(
+      successResponse("Item fetched successfully", {
+        item: {
+          id: item._id,
+          title: item.title,
+          description: item.description,
         },
       })
     );
