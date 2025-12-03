@@ -81,7 +81,6 @@ export const registerUser = async (req, res) => {
       })
     );
   } catch (err) {
-    console.log("REGISTER ERROR:", err);
     return res.status(500).json(serverError());
   }
 };
@@ -128,7 +127,6 @@ export const loginUser = async (req, res) => {
       })
     );
   } catch (error) {
-    console.log("LOGIN ERROR →", error);
     return res.status(500).json(serverError());
   }
 };
@@ -154,7 +152,6 @@ export const getMyProfile = async (req, res) => {
       })
     );
   } catch (error) {
-    console.log("LOGIN ERROR →", error);
     return res.status(500).json(serverError());
   }
 };

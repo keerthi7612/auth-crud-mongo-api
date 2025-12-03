@@ -16,12 +16,11 @@ export const createItem = async (req, res) => {
       return sendFieldError(res, "title is required", "title");
     }
 
-    console.log("Checking if item exists...");
     const existing = await Item.findOne({ title, userId });
     if (existing) {
       return sendDuplicateError(res, "Item already exists", "title");
     }
-    console.log("Existing item:", existing);
+
     const item = await Item.create({ title, description, userId });
 
     return res.status(201).json(
@@ -34,11 +33,9 @@ export const createItem = async (req, res) => {
       })
     );
   } catch (error) {
-    console.log("Create item error:", error);
     return res.status(500).json(serverError());
   }
 };
-//#################################
 
 export const getAllItems = async (req, res) => {
   try {
@@ -73,7 +70,6 @@ export const getAllItems = async (req, res) => {
     return res.status(200).json(
       successResponse("Items fetched successfully", {
         items: items.map((item) => ({
-          id: item._id,
           title: item.title,
           description: item.description,
         })),
@@ -85,7 +81,6 @@ export const getAllItems = async (req, res) => {
       })
     );
   } catch (error) {
-    console.log("GET ITEMS ERROR:", error);
     return res.status(500).json(serverError());
   }
 };

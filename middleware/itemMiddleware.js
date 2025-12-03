@@ -19,7 +19,6 @@ export const itemMiddleware = async (req, res, next) => {
     req.user = { id: decoded.id };
     next();
   } catch (error) {
-    console.log("AUTH ERROR:", error.message);
     return res.status(401).json(authErrorResponse());
   }
 };

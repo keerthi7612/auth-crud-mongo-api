@@ -29,7 +29,6 @@ export const authMiddleware = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    console.log("LOGIN ERROR →", error);
     return res.status(500).json(serverError());
   }
 };
