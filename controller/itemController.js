@@ -38,22 +38,17 @@ export const createItem = async (req, res) => {
     return res.status(500).json(serverError());
   }
 };
+//#################################
 
 export const getAllItems = async (req, res) => {
   try {
-    const userId = req.user.id;
-
-    let { sort = "asc", search = "", page = 1, limit = 5 } = req.query;
+    let { search = "", page = 1, limit = 5 } = req.query;
 
     page = Number(page);
     limit = Number(limit);
 
-    if (!["asc", "desc"].includes(sort.toLowerCase())) {
-      return validationFieldError(res, "Invalid sort value", "sort"); // use sendFieldError
-    }
-
     if (isNaN(page) || page <= 0) {
-      return validationFieldError(res, "Invalid page value", "page"); // use sendFieldError
+      return validationFieldError(res, "Invalid page value", "page");
     }
 
     if (isNaN(limit) || limit <= 0) {
@@ -66,14 +61,13 @@ export const getAllItems = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const items = await Item.find({
-      userId,
       ...searchFilter,
     })
-      .sort({ createdAt: sort === "asc" ? 1 : -1 })
+
       .skip(skip)
       .limit(limit);
 
-    const totalItems = await Item.countDocuments({ userId, ...searchFilter });
+    const totalItems = await Item.countDocuments({ ...searchFilter });
     const totalPages = Math.ceil(totalItems / limit);
 
     return res.status(200).json(

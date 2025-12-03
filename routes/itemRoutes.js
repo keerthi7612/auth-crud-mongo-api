@@ -5,7 +5,7 @@ import { validateCreateItem } from "../validation/itemValidator.js";
 
 const itemRoutes = Router();
 
-itemRoutes.get("/getItems", itemMiddleware, getAllItems);
+itemRoutes.get("/getItems", getAllItems);
 itemRoutes.post("/create", itemMiddleware, createItem, validateCreateItem);
 
 export default itemRoutes;

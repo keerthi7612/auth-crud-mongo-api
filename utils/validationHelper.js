@@ -3,7 +3,7 @@ import { errorResponse } from "./responseUtil.js";
 export const sendFieldError = (res, message, field, statusCode = 400) => {
   const errorDetails = [
     {
-      type: "field",
+      type: field,
       msg: message,
       path: field,
       location: "body",
