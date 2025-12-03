@@ -89,6 +89,84 @@ components:
               location:
                 type: string
 
+    Item:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the item
+          example: "69306a97b41ca2daad9e9dfe"
+        title:
+          type: string
+          description: The title of the item
+          example: "test 1"
+        description:
+          type: string
+          description: The description of the item
+          example: "passWord123#"
+      required:
+        - id
+        - title
+        - description
+
+    PaginatedItemsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Items fetched successfully"
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Item'
+            pagination:
+              type: object
+              properties:
+                currentPage:
+                  type: integer
+                  example: 1
+                totalPages:
+                  type: integer
+                  example: 3
+                totalItems:
+                  type: integer
+                  example: 12
+
+    ServerError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Internal server error"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                example: "server"
+              msg:
+                type: string
+                example: "Unexpected server error"
+              path:
+                type: string
+                nullable: true
+                example: null
+              location:
+                type: string
+                nullable: true
+                example: null
+
 paths:
   # ---------------------- AUTH ----------------------
   /auth/register:
@@ -270,86 +348,85 @@ paths:
                 message: "Something went wrong on the server"
 
   # ----------------------ITEMS ----------------------
-  /items:
+  /item/getItems:
     get:
       tags:
         - Items
-      summary: Get all items of logged-in user
-      security:
-        - BearerAuth: []
+      summary: Get all items (public endpoint)
+      description: Get paginated list of all items from all users with search functionality
+      parameters:
+        - name: search
+          in: query
+          required: false
+          description: Search items by title (case-insensitive)
+          schema:
+            type: string
+            example: "test"
+        - name: page
+          in: query
+          required: false
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 5
+            example: 5
       responses:
         "200":
-          description: Returns list of user items
+          description: Items fetched successfully
           content:
             application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedItemsResponse'
               example:
                 success: true
                 message: "Items fetched successfully"
-                items:
-                  - id: "1"
-                    title: "Bag"
-                    description: "Black leather bag"
-                  - id: "2"
-                    title: "Laptop"
-                    description: "Dell laptop"
-                pagination:
-                currentPage: 1
-                totalPages: 3
-                totalItems: 12
-                limit: 5
+                data:
+                  items:
+                    - id: "69306a97b41ca2daad9e9dfe"
+                      title: "test 1"
+                      description: "passWord123#"
+                    - id: "69306a9fb41ca2daad9e9e02"
+                      title: "test 11"
+                      description: "passWord123#"
+                  pagination:
+                    currentPage: 1
+                    totalPages: 3
+                    totalItems: 12
 
         "400":
-          description: Invalid query or parameters
+          description: Invalid query parameters
           content:
             application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
               example:
                 success: false
                 message: "Validation failed"
                 errors:
                   - type: "query"
-                    msg: "Invalid sort value"
-                    path: "sort"
+                    msg: "Invalid page value"
+                    path: "page"
                     location: "query"
-
-        "401":
-          description: Unauthorized - Token missing or invalid
-          content:
-            application/json:
-              example:
-                success: false
-                message: "Unauthorized"
-                errors:
-                  - type: "auth"
-                    msg: "Token missing or invalid"
-                    path: "authorization"
-                    location: "header"
-
-        "404":
-          description: Item not found
-          content:
-            application/json:
-              example:
-                success: false
-                message: "Item not found"
-                errors:
-                  - type: "not_found"
-                    msg: "No items found for this user"
-                    path: "items"
-                    location: "database"
 
         "500":
           description: Internal Server Error
           content:
             application/json:
-              example:
-                success: false
-                message: "Internal server error"
-                errors:
-                  - type: "server"
-                    msg: "Unexpected server error"
-                    path: null
-                    location: null
+              schema:
+                $ref: '#/components/schemas/ServerError'
 
+  /item/create:
     post:
       tags:
         - Items
@@ -374,15 +451,18 @@ paths:
               example:
                 success: true
                 message: "Item created successfully"
-                item:
-                  id: "abc123"
-                  title: "New Item"
-                  description: "This is a sample item"
+                data:
+                  item:
+                    id: "69306a97b41ca2daad9e9dfe"
+                    title: "New Item"
+                    description: "This is a sample item"
 
         "400":
-          description: Bad Request
+          description: Validation failed
           content:
             application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
               example:
                 success: false
                 message: "title is required"
@@ -398,17 +478,14 @@ paths:
             application/json:
               example:
                 success: false
-                message: "Invalid or expired token"
-                errors:
-                  - type: "auth"
-                    msg: "Token invalid or missing"
-                    path: null
-                    location: "header"
+                message: "Validation failed"
 
         "409":
           description: Duplicate item for this user
           content:
             application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
               example:
                 success: false
                 message: "Item already exists"
@@ -422,243 +499,81 @@ paths:
           description: Internal Server Error
           content:
             application/json:
-              example:
-                success: false
-                message: "Internal server error"
-                errors:
-                  - type: "server"
-                    msg: "Unexpected error occurred"
-                    path: null
-                    location: null
+              schema:
+                $ref: '#/components/schemas/ServerError'
 
-  /items/{id}:
-    get:
+  /item/{id}:
+    delete:
       tags:
         - Items
-      summary: Get single item (owned by user)
+      summary: Delete item (only if owned)
+      description: Delete a specific item by ID. Only the item owner can delete their items.
       security:
         - BearerAuth: []
       parameters:
         - name: id
           in: path
           required: true
+          description: The ID of the item to delete
           schema:
             type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+            example: "69306a97b41ca2daad9e9dfe"
       responses:
         "200":
-          description: Item found
+          description: Item deleted successfully
           content:
             application/json:
               example:
                 success: true
-                message: "Item fetched successfully"
-                item:
-                  id: "1"
-                  title: "Book"
-                  description: "Red diary"
+                message: "Item deleted successfully"
+                data:
+                  deletedItem:
+                    id: "69306a97b41ca2daad9e9dfe"
+                    title: "test 1"
+                    description: "passWord123#"
 
         "400":
-          description: Invalid item ID
+          description: Validation failed - Invalid or missing item ID
           content:
             application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
               example:
                 success: false
-                message: "Invalid item ID"
+                message: "Item ID is required"
                 errors:
                   - type: "field"
-                    msg: "Invalid item id"
+                    msg: "Item ID is required"
                     path: "id"
-                    location: "path"
+                    location: "body"
 
         "401":
-          description: Unauthorized - Token invalid
-          content:
-            application/json:
-              example:
-                success: false
-                message: "Invalid or expired token"
-                errors:
-                  - type: "auth"
-                    msg: "Token missing or invalid"
-                    path: null
-                    location: "header"
-
-        "404":
-          description: Item not found or not owned
-          content:
-            application/json:
-              example:
-                success: false
-                message: "Item not found"
-                errors:
-                  - type: "not_found"
-                    msg: "Item not found or not owned by user"
-                    path: "id"
-                    location: "path"
-
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              example:
-                success: false
-                message: "Internal server error"
-                errors:
-                  - type: "server"
-                    msg: "Unexpected error occurred"
-                    path: null
-                    location: null
-
-    put:
-      tags:
-        - Items
-      summary: Update item (only if owned)
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ItemRequest"
-            example:
-              title: "Updated Item"
-              description: "Updated description"
-      responses:
-        "200":
-          description: Item updated
-          content:
-            application/json:
-              example:
-                success: true
-                message: "item updated"
-
-        "400":
-          description: Validation failed
+          description: Unauthorized - Missing or invalid token
           content:
             application/json:
               example:
                 success: false
                 message: "Validation failed"
-                errors:
-                  - type: "field"
-                    msg: "title is required"
-                    path: "title"
-                    location: "body"
-
-        "401":
-          description: Unauthorized - Token invalid
-          content:
-            application/json:
-              example:
-                success: false
-                message: "Invalid or expired token"
-                errors:
-                  - type: "auth"
-                    msg: "Token missing or invalid"
-                    path: null
-                    location: "header"
 
         "404":
-          description: Item not found or not owned
+          description: Item not found or user doesn't have permission
           content:
             application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
               example:
                 success: false
-                message: "item not found"
+                message: "Item not found or you don't have permission to delete this item"
                 errors:
-                  - type: "not_found"
-                    msg: "Item not found or not owned"
+                  - type: "resource"
+                    msg: "Item not found"
                     path: "id"
-                    location: "path"
+                    location: "params"
 
         "500":
           description: Internal Server Error
           content:
             application/json:
-              example:
-                success: false
-                message: "Internal server error"
-                errors:
-                  - type: "server"
-                    msg: "Unexpected error occurred"
-                    path: null
-                    location: null
-
-    delete:
-      tags:
-        - Items
-      summary: Delete item (only if owned)
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Item deleted
-          content:
-            application/json:
-              example:
-                success: true
-                message: "item deleted"
-
-        "400":
-          description: Invalid ID format
-          content:
-            application/json:
-              example:
-                success: false
-                message: "Invalid id format"
-                errors:
-                  - type: "field"
-                    msg: "Invalid id format"
-                    path: "id"
-                    location: "path"
-
-        "401":
-          description: Unauthorized - Token invalid
-          content:
-            application/json:
-              example:
-                success: false
-                message: "Invalid or expired token"
-                errors:
-                  - type: "auth"
-                    msg: "Token missing or invalid"
-                    path: null
-                    location: "header"
-
-        "404":
-          description: Item not found or not owned
-          content:
-            application/json:
-              example:
-                success: false
-                message: "item not found"
-                errors:
-                  - type: "not_found"
-                    msg: "Item not found or not owned"
-                    path: "id"
-                    location: "path"
-
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              example:
-                success: false
-                message: "Internal server error"
-                errors:
-                  - type: "server"
-                    msg: "Unexpected error occurred"
-                    path: null
-                    location: null
+              schema:
+                $ref: '#/components/schemas/ServerError'

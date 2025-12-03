@@ -1,11 +1,8 @@
 import Item from "../model/itemModel.js";
-import { successResponse, serverError } from "../utils/responseUtil.js";
-
-import {
-  sendFieldError,
-  sendDuplicateError,
-  validationFieldError,
-} from "../utils/validationHelper.js";
+import { sendFieldError, sendDuplicateError, validationFieldError } from "../utils/validationHelper.js";
+import { transformItem, transformItems } from "../utils/itemTransformer.js";
+import { sendCreated, sendSuccess, sendNotFound, sendServerError } from "../utils/httpResponseHelper.js";
+import { buildSearchFilter, calculatePagination, buildPaginationMeta } from "../utils/dbQueryHelper.js";
 
 export const createItem = async (req, res) => {
   try {
@@ -23,17 +20,11 @@ export const createItem = async (req, res) => {
 
     const item = await Item.create({ title, description, userId });
 
-    return res.status(201).json(
-      successResponse("Item created successfully", {
-        item: {
-          id: item._id,
-          title: item.title,
-          description: item.description,
-        },
-      })
-    );
+    return sendCreated(res, "Item created successfully", {
+      item: transformItem(item)
+    });
   } catch (error) {
-    return res.status(500).json(serverError());
+    return sendServerError(res, error, "CREATE_ITEM");
   }
 };
 
@@ -52,35 +43,53 @@ export const getAllItems = async (req, res) => {
       return validationFieldError(res, "Invalid limit value", "limit");
     }
 
-    const searchFilter =
-      search.trim() !== "" ? { title: { $regex: search, $options: "i" } } : {};
+    const searchFilter = buildSearchFilter(search);
+    const { skip, limit: parsedLimit } = calculatePagination(page, limit);
 
-    const skip = (page - 1) * limit;
-
-    const items = await Item.find({
-      ...searchFilter,
-    })
-
+    const items = await Item.find(searchFilter)
       .skip(skip)
-      .limit(limit);
+      .limit(parsedLimit);
 
-    const totalItems = await Item.countDocuments({ ...searchFilter });
-    const totalPages = Math.ceil(totalItems / limit);
+    const totalItems = await Item.countDocuments(searchFilter);
 
-    return res.status(200).json(
-      successResponse("Items fetched successfully", {
-        items: items.map((item) => ({
-          title: item.title,
-          description: item.description,
-        })),
-        pagination: {
-          currentPage: Number(page),
-          totalPages,
-          totalItems,
-        },
-      })
-    );
+    return sendSuccess(res, "Items fetched successfully", {
+      items: transformItems(items),
+      pagination: buildPaginationMeta(page, limit, totalItems)
+    });
   } catch (error) {
-    return res.status(500).json(serverError());
+    return sendServerError(res, error, "GET_ITEMS");
+  }
+};
+
+export const deleteItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    if (!id || id.trim() === "") {
+      return sendFieldError(res, "Item ID is required", "id");
+    }
+
+    const item = await Item.findOne({ _id: id, userId });
+
+    if (!item) {
+      return sendNotFound(res, "Item not found or you don't have permission to delete this item", [
+        {
+          type: "resource",
+          msg: "Item not found",
+          path: "id",
+          location: "params",
+        }
+      ]);
+    }
+
+    await Item.findByIdAndDelete(id);
+
+    return sendSuccess(res, "Item deleted successfully", {
+      deletedItem: transformItem(item)
+    });
+
+  } catch (error) {
+    return sendServerError(res, error, "DELETE_ITEM");
   }
 };
