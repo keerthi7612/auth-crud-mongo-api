@@ -12,7 +12,7 @@ export const sendNotFound = (res, message, errors) => {
   return res.status(404).json({
     success: false,
     message,
-    errors
+    errors,
   });
 };
 

@@ -130,3 +130,46 @@ export const deleteItem = async (req, res) => {
     return sendServerError(res, error, "DELETE_ITEM");
   }
 };
+
+export const updateItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description } = req.body;
+
+    // Validate ID
+    if (!id) {
+      return validationFieldError(res, "Item ID is required", "id", "params");
+    }
+
+    // Validate at least one field
+    if (!title && !description) {
+      return validationFieldError(
+        res,
+        "At least one field (title or description) must be provided",
+        "body",
+        "body"
+      );
+    }
+
+    const updatedData = {};
+    if (title) updatedData.title = title;
+    if (description) updatedData.description = description;
+
+    // Update the item
+    const item = await Item.findByIdAndUpdate(id, updatedData, {
+      new: true, // return updated item
+      runValidators: true, // apply mongoose validations
+    });
+
+    if (!item) {
+      return sendFieldError(res, "Item not found", "id", 404);
+    }
+
+    return sendCreated(res, "Item updated successfully", {
+      item: transformItem(item),
+    });
+  } catch (error) {
+    console.log(error);
+    return sendServerError(res, error, "UPDATE_ITEM");
+  }
+};

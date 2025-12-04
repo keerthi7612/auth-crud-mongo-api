@@ -374,11 +374,10 @@ paths:
               example:
                 success: true
                 message: "Item created successfully"
-                data:
-                  item:
-                    id: "69306a97b41ca2daad9e9dfe"
-                    title: "New Item"
-                    description: "This is a sample item"
+                item:
+                  id: "69306a97b41ca2daad9e9dfe"
+                  title: "New Item"
+                  description: "This is a sample item"
 
         "400":
           description: Validation failed
