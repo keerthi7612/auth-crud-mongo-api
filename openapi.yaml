@@ -124,7 +124,7 @@ components:
             items:
               type: array
               items:
-                $ref: '#/components/schemas/Item'
+                $ref: "#/components/schemas/Item"
             pagination:
               type: object
               properties:
@@ -387,7 +387,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedItemsResponse'
+                $ref: "#/components/schemas/PaginatedItemsResponse"
               example:
                 success: true
                 message: "Items fetched successfully"
@@ -400,8 +400,8 @@ paths:
                       title: "test 11"
                       description: "passWord123#"
                   pagination:
-                    currentPage: 1
-                    totalPages: 3
+                    Page: 1
+                    limit: 5
                     totalItems: 12
 
         "400":
@@ -409,7 +409,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
               example:
                 success: false
                 message: "Validation failed"
@@ -424,7 +424,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServerError'
+                $ref: "#/components/schemas/ServerError"
 
   /item/create:
     post:
@@ -462,7 +462,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
               example:
                 success: false
                 message: "title is required"
@@ -485,7 +485,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
               example:
                 success: false
                 message: "Item already exists"
@@ -500,7 +500,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServerError'
+                $ref: "#/components/schemas/ServerError"
 
   /item/{id}:
     delete:
@@ -517,7 +517,7 @@ paths:
           description: The ID of the item to delete
           schema:
             type: string
-            pattern: '^[0-9a-fA-F]{24}$'
+            pattern: "^[0-9a-fA-F]{24}$"
             example: "69306a97b41ca2daad9e9dfe"
       responses:
         "200":
@@ -538,7 +538,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
               example:
                 success: false
                 message: "Item ID is required"
@@ -561,7 +561,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
               example:
                 success: false
                 message: "Item not found or you don't have permission to delete this item"
@@ -576,4 +576,4 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServerError'
+                $ref: "#/components/schemas/ServerError"
