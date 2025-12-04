@@ -134,42 +134,47 @@ export const deleteItem = async (req, res) => {
 export const updateItem = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description } = req.body;
-
-    // Validate ID
     if (!id) {
       return validationFieldError(res, "Item ID is required", "id", "params");
     }
-
-    // Validate at least one field
-    if (!title && !description) {
-      return validationFieldError(
-        res,
-        "At least one field (title or description) must be provided",
-        "body",
-        "body"
-      );
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return sendFieldError(res, "Invalid Item ID format", "id", 400);
     }
-
-    const updatedData = {};
-    if (title) updatedData.title = title;
-    if (description) updatedData.description = description;
-
-    // Update the item
-    const item = await Item.findByIdAndUpdate(id, updatedData, {
-      new: true, // return updated item
-      runValidators: true, // apply mongoose validations
-    });
-
+    const item = await Item.findById(id);
     if (!item) {
       return sendFieldError(res, "Item not found", "id", 404);
     }
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return validationFieldError(res, "Request body is required", "body");
+    }
+    const { title, description } = req.body;
+    if (title !== undefined && title.trim() === "") {
+      return validationFieldError(res, "Title cannot be empty", "title");
+    }
+    const noChange =
+      (title === undefined || title === item.title) &&
+      (description === undefined || description === item.description);
 
-    return sendCreated(res, "Item updated successfully", {
-      item: transformItem(item),
+    if (noChange) {
+      return sendSuccess(res, "No changes detected", {
+        item: {
+          id: item._id,
+          title: item.title,
+          description: item.description,
+        },
+      });
+    }
+    if (title !== undefined) item.title = title;
+    if (description !== undefined) item.description = description;
+    await item.save();
+    return sendSuccess(res, "Item updated successfully", {
+      item: {
+        id: item._id,
+        title: item.title,
+        description: item.description,
+      },
     });
   } catch (error) {
-    console.log(error);
     return sendServerError(res, error, "UPDATE_ITEM");
   }
 };
