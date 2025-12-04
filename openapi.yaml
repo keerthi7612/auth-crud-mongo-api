@@ -270,16 +270,42 @@ paths:
                 message: "Something went wrong on the server"
 
   # ----------------------ITEMS ----------------------
-  /items:
+  /item/getItems:
     get:
       tags:
         - Items
-      summary: Get all items of logged-in user
-      security:
-        - BearerAuth: []
+      summary: Get all items (public endpoint)
+      description: Get paginated list of all items from all users with search functionality
+      parameters:
+        - name: search
+          in: query
+          required: false
+          description: Search items by title (case-insensitive)
+          schema:
+            type: string
+            example: "test"
+        - name: page
+          in: query
+          required: false
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 5
+            example: 5
       responses:
         "200":
-          description: Returns list of user items
+          description: Items fetched successfully
           content:
             application/json:
               example:
@@ -299,7 +325,7 @@ paths:
                 totalItems: 12
 
         "400":
-          description: Invalid query or parameters
+          description: Invalid query parameters
           content:
             application/json:
               example:
@@ -307,35 +333,9 @@ paths:
                 message: "Validation failed"
                 errors:
                   - type: "query"
-                    msg: "Invalid sort value"
-                    path: "sort"
+                    msg: "Invalid page value"
+                    path: "page"
                     location: "query"
-
-        "401":
-          description: Unauthorized - Token missing or invalid
-          content:
-            application/json:
-              example:
-                success: false
-                message: "Unauthorized"
-                errors:
-                  - type: "auth"
-                    msg: "Token missing or invalid"
-                    path: "authorization"
-                    location: "header"
-
-        "404":
-          description: Item not found
-          content:
-            application/json:
-              example:
-                success: false
-                message: "Item not found"
-                errors:
-                  - type: "not_found"
-                    msg: "No items found for this user"
-                    path: "items"
-                    location: "database"
 
         "500":
           description: Internal Server Error
@@ -374,13 +374,14 @@ paths:
               example:
                 success: true
                 message: "Item created successfully"
-                item:
-                  id: "abc123"
-                  title: "New Item"
-                  description: "This is a sample item"
+                data:
+                  item:
+                    id: "69306a97b41ca2daad9e9dfe"
+                    title: "New Item"
+                    description: "This is a sample item"
 
         "400":
-          description: Bad Request
+          description: Validation failed
           content:
             application/json:
               example:
@@ -398,12 +399,7 @@ paths:
             application/json:
               example:
                 success: false
-                message: "Invalid or expired token"
-                errors:
-                  - type: "auth"
-                    msg: "Token invalid or missing"
-                    path: null
-                    location: "header"
+                message: "Validation failed"
 
         "409":
           description: Duplicate item for this user
@@ -594,61 +590,63 @@ paths:
       tags:
         - Items
       summary: Delete item (only if owned)
+      description: Delete a specific item by ID. Only the item owner can delete their items.
       security:
         - BearerAuth: []
       parameters:
         - name: id
           in: path
           required: true
+          description: The ID of the item to delete
           schema:
             type: string
       responses:
         "200":
-          description: Item deleted
+          description: Item deleted successfully
           content:
             application/json:
               example:
                 success: true
-                message: "item deleted"
+                message: "Item deleted successfully"
+                data:
+                  deletedItem:
+                    id: "69306a97b41ca2daad9e9dfe"
+                    title: "test 1"
+                    description: "passWord123#"
 
         "400":
-          description: Invalid ID format
+          description: Validation failed - Invalid or missing item ID
           content:
             application/json:
               example:
                 success: false
-                message: "Invalid id format"
+                message: "Item ID is required"
                 errors:
                   - type: "field"
-                    msg: "Invalid id format"
+                    msg: "Item ID is required"
                     path: "id"
-                    location: "path"
+                    location: "body"
 
         "401":
-          description: Unauthorized - Token invalid
+          description: Unauthorized - Missing or invalid token
           content:
             application/json:
               example:
                 success: false
-                message: "Invalid or expired token"
-                errors:
-                  - type: "auth"
-                    msg: "Token missing or invalid"
-                    path: null
-                    location: "header"
+                message: "Validation failed"
 
         "404":
-          description: Item not found or not owned
+          description: Item not found or user doesn't have permission
           content:
             application/json:
               example:
                 success: false
-                message: "item not found"
+                message: "Item not found or you don't have permission to delete this item"
                 errors:
-                  - type: "not_found"
-                    msg: "Item not found or not owned"
+                  - type: "resource"
+                    msg: "Item not found"
                     path: "id"
-                    location: "path"
+                    location: "params"
 
         "500":
           description: Internal Server Error
