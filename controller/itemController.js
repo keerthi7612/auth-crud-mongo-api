@@ -87,23 +87,12 @@ export const getAllItems = async (req, res) => {
 
 export const getItemById = async (req, res) => {
   try {
-    const userId = req.user.id;
     const { id } = req.params;
 
     if (!id) {
       return validationFieldError(res, "Item ID is required", "id", "params");
     }
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return validationFieldError(
-        res,
-        "Invalid item ID format",
-        "id",
-        "params"
-      );
-    }
-
-    const item = await Item.findOne({ _id: id, userId });
+    const item = await Item.findById(id);
 
     if (!item) {
       return sendFieldError(res, "Item not found", "id", 404);

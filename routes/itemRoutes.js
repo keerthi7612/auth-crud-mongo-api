@@ -11,7 +11,7 @@ import { authMiddleware } from "../middleware/authMiddleware.js";
 const itemRoutes = Router();
 
 itemRoutes.get("/getItems", getAllItems);
-itemRoutes.get("/getItem/:id", authMiddleware, getItemById);
+itemRoutes.get("/getItem/:id", getItemById);
 itemRoutes.post("/create", itemMiddleware, createItem, validateCreateItem);
 
 export default itemRoutes;
