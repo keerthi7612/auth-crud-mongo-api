@@ -1,8 +1,23 @@
 import Item from "../model/itemModel.js";
-import { sendFieldError, sendDuplicateError, validationFieldError } from "../utils/validationHelper.js";
+import {
+  sendFieldError,
+  sendDuplicateError,
+  validationFieldError,
+} from "../utils/validationHelper.js";
 import { transformItem, transformItems } from "../utils/itemTransformer.js";
-import { sendCreated, sendSuccess, sendNotFound, sendServerError } from "../utils/httpResponseHelper.js";
-import { buildSearchFilter, calculatePagination, buildPaginationMeta } from "../utils/dbQueryHelper.js";
+import {
+  sendCreated,
+  sendSuccess,
+  sendNotFound,
+  sendServerError,
+} from "../utils/httpResponseHelper.js";
+import {
+  buildSearchFilter,
+  calculatePagination,
+  buildPaginationMeta,
+} from "../utils/dbQueryHelper.js";
+import { serverError, successResponse } from "../utils/responseUtil.js";
+import mongoose from "mongoose";
 
 export const createItem = async (req, res) => {
   try {
@@ -21,7 +36,8 @@ export const createItem = async (req, res) => {
     const item = await Item.create({ title, description, userId });
 
     return sendCreated(res, "Item created successfully", {
-      item: transformItem(item)
+      id: item._id,
+      item: transformItem(item),
     });
   } catch (error) {
     return sendServerError(res, error, "CREATE_ITEM");
@@ -46,18 +62,36 @@ export const getAllItems = async (req, res) => {
     const searchFilter = buildSearchFilter(search);
     const { skip, limit: parsedLimit } = calculatePagination(page, limit);
 
-    const items = await Item.find(searchFilter)
-      .skip(skip)
-      .limit(parsedLimit);
+    const items = await Item.find(searchFilter).skip(skip).limit(parsedLimit);
 
     const totalItems = await Item.countDocuments(searchFilter);
 
     return sendSuccess(res, "Items fetched successfully", {
       items: transformItems(items),
-      pagination: buildPaginationMeta(page, limit, totalItems)
+      pagination: buildPaginationMeta(page, limit, totalItems),
     });
   } catch (error) {
     return sendServerError(res, error, "GET_ITEMS");
+  }
+};
+
+export const getItemById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return validationFieldError(res, "Item ID is required", "id", "params");
+    }
+    const item = await Item.findById(id);
+
+    if (!item) {
+      return sendFieldError(res, "Item not found", "id", 404);
+    }
+    return sendCreated(res, "Item fetched successfully", {
+      item: transformItem(item),
+    });
+  } catch (error) {
+    return sendServerError(res, error, "DELETE_ITEM");
   }
 };
 
@@ -73,22 +107,25 @@ export const deleteItem = async (req, res) => {
     const item = await Item.findOne({ _id: id, userId });
 
     if (!item) {
-      return sendNotFound(res, "Item not found or you don't have permission to delete this item", [
-        {
-          type: "resource",
-          msg: "Item not found",
-          path: "id",
-          location: "params",
-        }
-      ]);
+      return sendNotFound(
+        res,
+        "Item not found or you don't have permission to delete this item",
+        [
+          {
+            type: "resource",
+            msg: "Item not found",
+            path: "id",
+            location: "params",
+          },
+        ]
+      );
     }
 
     await Item.findByIdAndDelete(id);
 
     return sendSuccess(res, "Item deleted successfully", {
-      deletedItem: transformItem(item)
+      deletedItem: transformItem(item),
     });
-
   } catch (error) {
     return sendServerError(res, error, "DELETE_ITEM");
   }
