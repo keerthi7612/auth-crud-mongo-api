@@ -112,7 +112,6 @@ export const deleteItem = async (req, res) => {
       deletedItem: transformItem(item),
     });
   } catch (error) {
-    console.log(error);
     return sendServerError(res, error, "DELETE_ITEM");
   }
 };
