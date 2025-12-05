@@ -451,11 +451,10 @@ paths:
               example:
                 success: true
                 message: "Item created successfully"
-                data:
-                  item:
-                    id: "69306a97b41ca2daad9e9dfe"
-                    title: "New Item"
-                    description: "This is a sample item"
+                item:
+                  id: "69306a97b41ca2daad9e9dfe"
+                  title: "New Item"
+                  description: "This is a sample item"
 
         "400":
           description: Validation failed
@@ -478,7 +477,12 @@ paths:
             application/json:
               example:
                 success: false
-                message: "Validation failed"
+                message: "Unauthorized"
+                errors:
+                  - type: "auth"
+                    msg: "Token missing or invalid"
+                    path: null
+                    location: "header"
 
         "409":
           description: Duplicate item for this user
@@ -529,7 +533,6 @@ paths:
                 message: "Item deleted successfully"
                 data:
                   deletedItem:
-                    id: "69306a97b41ca2daad9e9dfe"
                     title: "test 1"
                     description: "passWord123#"
 
