@@ -3,12 +3,12 @@ import {
   sendFieldError,
   sendDuplicateError,
   validationFieldError,
+  sendNotFoundError,
 } from "../utils/validationHelper.js";
 import { transformItem, transformItems } from "../utils/itemTransformer.js";
 import {
   sendCreated,
   sendSuccess,
-  sendNotFound,
   sendServerError,
 } from "../utils/httpResponseHelper.js";
 import {
@@ -16,8 +16,6 @@ import {
   calculatePagination,
   buildPaginationMeta,
 } from "../utils/dbQueryHelper.js";
-import { serverError, successResponse } from "../utils/responseUtil.js";
-import mongoose from "mongoose";
 
 export const createItem = async (req, res) => {
   try {
@@ -52,11 +50,11 @@ export const getAllItems = async (req, res) => {
     limit = Number(limit);
 
     if (isNaN(page) || page <= 0) {
-      return validationFieldError(res, "Invalid page value", "page");
+      return validationFieldError(res, "Invalid page value", "page", "query");
     }
 
     if (isNaN(limit) || limit <= 0) {
-      return validationFieldError(res, "Invalid limit value", "limit");
+      return validationFieldError(res, "Invalid limit value", "limit", "query");
     }
 
     const searchFilter = buildSearchFilter(search);
@@ -79,13 +77,17 @@ export const getItemById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!id) {
-      return validationFieldError(res, "Item ID is required", "id", "params");
+    if (!id || id.trim() === "") {
+      return sendFieldError(res, "Item ID is required", "id");
     }
-    const item = await Item.findById(id);
 
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return sendFieldError(res, "Invalid Item ID format", "id");
+    }
+
+    const item = await Item.findById(id);
     if (!item) {
-      return sendFieldError(res, "Item not found", "id", 404);
+      return sendNotFoundError(res, "Item not found", "id");
     }
     return sendCreated(res, "Item fetched successfully", {
       item: transformItem(item),
@@ -98,35 +100,27 @@ export const getItemById = async (req, res) => {
 export const deleteItem = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
 
     if (!id || id.trim() === "") {
       return sendFieldError(res, "Item ID is required", "id");
     }
 
+    if (!/^[0-9a-fA-F]{24}$/.test(id)) {
+      return sendFieldError(res, "Invalid Item ID format", "id");
+    }
+    const userId = req.user.id;
     const item = await Item.findOne({ _id: id, userId });
 
     if (!item) {
-      return sendNotFound(
-        res,
-        "Item not found or you don't have permission to delete this item",
-        [
-          {
-            type: "resource",
-            msg: "Item not found",
-            path: "id",
-            location: "params",
-          },
-        ]
-      );
+      return sendNotFoundError(res, "Item not found", "id");
     }
-
     await Item.findByIdAndDelete(id);
 
     return sendSuccess(res, "Item deleted successfully", {
       deletedItem: transformItem(item),
     });
   } catch (error) {
+    console.log(error);
     return sendServerError(res, error, "DELETE_ITEM");
   }
 };
@@ -134,15 +128,17 @@ export const deleteItem = async (req, res) => {
 export const updateItem = async (req, res) => {
   try {
     const { id } = req.params;
-    if (!id) {
-      return validationFieldError(res, "Item ID is required", "id", "params");
+
+    if (!id || id.trim() === "") {
+      return sendFieldError(res, "Item ID is required", "id");
     }
+
     if (!id.match(/^[0-9a-fA-F]{24}$/)) {
       return sendFieldError(res, "Invalid Item ID format", "id", 400);
     }
     const item = await Item.findById(id);
     if (!item) {
-      return sendFieldError(res, "Item not found", "id", 404);
+      return sendNotFoundError(res, "Item not found", "id");
     }
     if (!req.body || Object.keys(req.body).length === 0) {
       return validationFieldError(res, "Request body is required", "body");
@@ -158,7 +154,6 @@ export const updateItem = async (req, res) => {
     if (noChange) {
       return sendSuccess(res, "No changes detected", {
         item: {
-          id: item._id,
           title: item.title,
           description: item.description,
         },
@@ -169,7 +164,6 @@ export const updateItem = async (req, res) => {
     await item.save();
     return sendSuccess(res, "Item updated successfully", {
       item: {
-        id: item._id,
         title: item.title,
         description: item.description,
       },
