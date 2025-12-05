@@ -319,10 +319,9 @@ paths:
                     title: "Laptop"
                     description: "Dell laptop"
                 pagination:
-                currentPage: 1
-                limit: 5
-                totalPages: 3
-                totalItems: 12
+                  currentPage: 1
+                  totalPages: 3
+                  totalItems: 12
 
         "400":
           description: Invalid query parameters
@@ -374,11 +373,10 @@ paths:
               example:
                 success: true
                 message: "Item created successfully"
-                data:
-                  item:
-                    id: "69306a97b41ca2daad9e9dfe"
-                    title: "New Item"
-                    description: "This is a sample item"
+                item:
+                  id: "69306a97b41ca2daad9e9dfe"
+                  title: "New Item"
+                  description: "This is a sample item"
 
         "400":
           description: Validation failed
@@ -399,7 +397,12 @@ paths:
             application/json:
               example:
                 success: false
-                message: "Validation failed"
+                message: "Unauthorized"
+                errors:
+                  - type: "auth"
+                    msg: "Token missing or invalid"
+                    path: null
+                    location: "header"
 
         "409":
           description: Duplicate item for this user
@@ -449,7 +452,6 @@ paths:
                 success: true
                 message: "Item fetched successfully"
                 item:
-                  id: "1"
                   title: "Book"
                   description: "Red diary"
 
@@ -465,19 +467,6 @@ paths:
                     msg: "Invalid item id"
                     path: "id"
                     location: "path"
-
-        "401":
-          description: Unauthorized - Token invalid
-          content:
-            application/json:
-              example:
-                success: false
-                message: "Invalid or expired token"
-                errors:
-                  - type: "auth"
-                    msg: "Token missing or invalid"
-                    path: null
-                    location: "header"
 
         "404":
           description: Item not found or not owned
@@ -533,6 +522,9 @@ paths:
               example:
                 success: true
                 message: "item updated"
+                item:
+                  title: "updated item"
+                  description: "Red diary"
 
         "400":
           description: Validation failed
@@ -610,7 +602,6 @@ paths:
                 message: "Item deleted successfully"
                 data:
                   deletedItem:
-                    id: "69306a97b41ca2daad9e9dfe"
                     title: "test 1"
                     description: "passWord123#"
 

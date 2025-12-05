@@ -3,11 +3,7 @@ import jwt from "jsonwebtoken";
 
 import bcrypt from "bcryptjs";
 
-import {
-  successResponse,
-  errorResponse,
-  serverError,
-} from "../utils/responseUtil.js";
+import { successResponse, serverError } from "../utils/responseUtil.js";
 import {
   sendFieldError,
   validationFieldError,
@@ -144,7 +140,7 @@ export const getMyProfile = async (req, res) => {
 
     return res.status(200).json(
       successResponse("User registered profile", {
-        data: {
+        user: {
           id: req.user._id,
           email: req.user.email,
           phone: req.user.phone,

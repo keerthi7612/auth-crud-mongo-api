@@ -26,11 +26,11 @@ export const authErrorResponse = () => {
   };
 };
 
-export const successResponse = (message, data = null) => {
+export const successResponse = (message, data = {}) => {
   return {
     success: true,
     message,
-    ...(data && { data }),
+    ...data,
   };
 };
 
