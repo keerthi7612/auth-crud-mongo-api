@@ -77,10 +77,6 @@ export const getItemById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!id || id.trim() === "") {
-      return sendFieldError(res, "Item ID is required", "id");
-    }
-
     if (!id.match(/^[0-9a-fA-F]{24}$/)) {
       return sendFieldError(res, "Invalid Item ID format", "id");
     }
@@ -100,10 +96,6 @@ export const getItemById = async (req, res) => {
 export const deleteItem = async (req, res) => {
   try {
     const { id } = req.params;
-
-    if (!id || id.trim() === "") {
-      return sendFieldError(res, "Item ID is required", "id");
-    }
 
     if (!/^[0-9a-fA-F]{24}$/.test(id)) {
       return sendFieldError(res, "Invalid Item ID format", "id");
@@ -128,11 +120,6 @@ export const deleteItem = async (req, res) => {
 export const updateItem = async (req, res) => {
   try {
     const { id } = req.params;
-
-    if (!id || id.trim() === "") {
-      return sendFieldError(res, "Item ID is required", "id");
-    }
-
     if (!id.match(/^[0-9a-fA-F]{24}$/)) {
       return sendFieldError(res, "Invalid Item ID format", "id", 400);
     }
